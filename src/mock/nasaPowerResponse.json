@@ -1,0 +1,48 @@
+{
+  "properties": {
+    "parameter": {
+      "ALLSKY_SFC_SW_DWN": {
+        "JAN": 5.0,
+        "FEB": 5.5,
+        "MAR": 6.0,
+        "APR": 6.2,
+        "MAY": 5.8,
+        "JUN": 5.4,
+        "JUL": 5.2,
+        "AUG": 5.3,
+        "SEP": 5.7,
+        "OCT": 5.9,
+        "NOV": 5.2,
+        "DEC": 4.8
+      },
+      "ALLSKY_SFC_SW_DNI": {
+        "JAN": 3.0,
+        "FEB": 3.5,
+        "MAR": 4.1,
+        "APR": 4.4,
+        "MAY": 4.2,
+        "JUN": 4.0,
+        "JUL": 3.9,
+        "AUG": 3.8,
+        "SEP": 4.0,
+        "OCT": 4.1,
+        "NOV": 3.5,
+        "DEC": 3.1
+      },
+      "ALLSKY_SFC_SW_DIFF": {
+        "JAN": 2.4,
+        "FEB": 2.5,
+        "MAR": 2.6,
+        "APR": 2.5,
+        "MAY": 2.3,
+        "JUN": 2.1,
+        "JUL": 2.0,
+        "AUG": 2.1,
+        "SEP": 2.2,
+        "OCT": 2.3,
+        "NOV": 2.2,
+        "DEC": 2.1
+      }
+    }
+  }
+}
