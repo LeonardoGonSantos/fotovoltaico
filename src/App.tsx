@@ -1,13 +1,16 @@
 import { AppStateProvider } from './context/AppStateContext'
+import { LayoutProvider } from './context/LayoutContext'
 import { AppShell } from './components/layout/AppShell'
 import { HomePage } from './routes/HomePage'
 
 export default function App() {
   return (
     <AppStateProvider>
-      <AppShell>
-        <HomePage />
-      </AppShell>
+      <LayoutProvider>
+        <AppShell>
+          <HomePage />
+        </AppShell>
+      </LayoutProvider>
     </AppStateProvider>
   )
 }

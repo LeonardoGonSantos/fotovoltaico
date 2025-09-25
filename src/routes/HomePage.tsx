@@ -1,12 +1,10 @@
 import { useMemo } from 'react'
 import { useAppState } from '../context/AppStateContext'
 import { AddressStep } from '../components/steps/AddressStep'
-import { RoofSelectStep } from '../components/steps/RoofSelectStep'
-import { TiltAzimuthStep } from '../components/steps/TiltAzimuthStep'
 import { BillStep } from '../components/steps/BillStep'
 import { ResultsStep } from '../components/steps/ResultsStep'
 
-const STEP_COMPONENTS = [AddressStep, RoofSelectStep, TiltAzimuthStep, BillStep, ResultsStep]
+const STEP_COMPONENTS = [AddressStep, BillStep, ResultsStep]
 
 export function HomePage() {
   const {

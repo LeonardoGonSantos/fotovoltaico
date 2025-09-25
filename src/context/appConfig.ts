@@ -1,11 +1,9 @@
 import type { AppConfig, SolarParams, StepDefinition } from '../types/domain'
 
 export const STEP_DEFINITIONS: StepDefinition[] = [
-  { key: 'address', title: 'Endereço', description: 'Busque e confirme o ponto de partida.' },
-  { key: 'roof', title: 'Telhado', description: 'Desenhe ou ajuste o polígono do telhado.' },
-  { key: 'angles', title: 'Ângulos', description: 'Ajuste a inclinação e orientação.' },
-  { key: 'bill', title: 'Conta de luz', description: 'Informe gastos e tarifa.' },
-  { key: 'results', title: 'Resultados', description: 'Veja geração e exporte o PDF.' },
+  { key: 'address', title: 'Endereço', description: 'Confirme a localização do imóvel.' },
+  { key: 'bill', title: 'Conta de luz', description: 'Informe gastos e parâmetros opcionais.' },
+  { key: 'results', title: 'Resultados', description: 'Analise geração e exporte o PDF.' },
 ]
 
 const parseEnvNumber = (value: unknown, fallback: number) => {

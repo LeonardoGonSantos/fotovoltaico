@@ -1,17 +1,18 @@
-import { useCallback, useEffect, useRef } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { useAppState } from '../../context/AppStateContext'
 import { useSolarCalc } from '../../hooks/useSolarCalc'
-import { PdfExportButton } from '../pdf/PdfExportButton'
 import { MonthlyGenerationChart } from '../charts/MonthlyGenerationChart'
 import { formatCurrency, formatNumber } from '../../utils/formatting'
 import type { LatLngPoint } from '../../types/domain'
+import { exportResultsPdf } from '../../services/pdfExport'
+import { useLayout } from '../../context/LayoutContext'
 
 function buildStaticMapUrl(points: LatLngPoint[], apiKey: string, centroid: LatLngPoint) {
   const url = new URL('https://maps.googleapis.com/maps/api/staticmap')
   url.searchParams.set('maptype', 'satellite')
   url.searchParams.set('scale', '2')
   url.searchParams.set('zoom', '20')
-  url.searchParams.set('size', '640x400')
+  url.searchParams.set('size', '640x320')
   url.searchParams.set('key', apiKey)
   const pathPoints = [...points, points[0]]
     .map((point) => `${point.lat.toFixed(6)},${point.lng.toFixed(6)}`)
@@ -34,11 +35,13 @@ export function ResultsStep() {
       dataSource,
     },
     config: { solar },
-    setStep,
     previousStep,
+    setStep,
   } = useAppState()
   const { runCalculation, dimensioningCapped } = useSolarCalc()
+  const { setLayout, resetLayout } = useLayout()
   const resultsRef = useRef<HTMLDivElement>(null)
+  const [tableExpanded, setTableExpanded] = useState(false)
 
   const apiKey = import.meta.env.VITE_GOOGLE_MAPS_API_KEY
   const staticMapUrl = roof?.polygon && apiKey ? buildStaticMapUrl(roof.polygon, apiKey, roof.centroid) : null
@@ -53,145 +56,134 @@ export function ResultsStep() {
     }
   }, [summary, isCalculating, handleCalculate])
 
+  const handleExportPdf = useCallback(() => {
+    if (!resultsRef.current) return
+    void exportResultsPdf(resultsRef.current, {
+      fileName: `economia-solar-${place?.formattedAddress?.replace(/[^a-z0-9]+/gi, '-').toLowerCase() ?? 'relatorio'}.pdf`,
+      title: 'Economia Solar — Estimativa',
+      subtitle: place?.formattedAddress,
+      notes:
+        dataSource === 'SOLAR_API'
+          ? 'Resultados estimados com base nos dados da Google Solar API.'
+          : 'Resultados estimados com base na modelagem manual (NASA POWER + Liu–Jordan).',
+    })
+  }, [dataSource, place])
+
+  useEffect(() => {
+    setLayout({
+      title: 'Resultados',
+      subtitle: 'Veja a estimativa de geração, potência e economia.',
+      actions: [
+        { label: 'Voltar', onClick: previousStep, variant: 'secondary' },
+        { label: 'Exportar PDF', onClick: handleExportPdf, disabled: !summary, variant: 'primary' },
+      ],
+    })
+    return () => resetLayout()
+  }, [handleExportPdf, previousStep, resetLayout, setLayout, summary])
+
   const sourceLabel = summary ? (dataSource === 'SOLAR_API' ? 'Fonte: Solar API' : 'Fonte: Manual (MVP)') : ''
-  const pdfNotes =
-    dataSource === 'SOLAR_API'
-      ? 'Resultados estimados com base nos dados da Google Solar API. Revise com um projeto elétrico homologado para confirmar viabilidade.'
-      : 'Resultados estimados com base na modelagem manual (NASA POWER + Liu–Jordan). Revise com um projeto elétrico homologado.'
 
   return (
-    <section className="section-card" aria-labelledby="results-step-title">
-      <header>
-        <h2 id="results-step-title" className="section-title">
-          5. Resultados
-        </h2>
-        <p className="section-subtitle">
-          Visualize a estimativa de geração mensal e economia potencial. {sourceLabel && <span style={{ fontWeight: 600 }}>{sourceLabel}</span>}
-        </p>
-      </header>
+    <section className="card" aria-labelledby="results-step-title">
+      <h2 id="results-step-title">Resultados da simulação</h2>
+      <p className="input-helper">Os cálculos consideram suas informações e dados climáticos públicos. {sourceLabel}</p>
 
-      {nasaError && (
-        <div className="alert error-alert" role="alert" style={{ marginBottom: '1rem' }}>
-          {nasaError}
-        </div>
-      )}
+      {nasaError ? (
+        <div className="alert error-alert">{nasaError}</div>
+      ) : null}
 
-      <div className="action-bar" style={{ marginBottom: '1.5rem' }}>
-        <button type="button" className="secondary-button" onClick={previousStep}>
-          Voltar
-        </button>
-        <button type="button" className="primary-button" onClick={handleCalculate} disabled={isCalculating}>
-          {isCalculating ? 'Calculando…' : 'Calcular estimativa'}
-        </button>
-      </div>
-
-      {dimensioningCapped && (
-        <div className="alert" style={{ marginBottom: '1rem' }}>
-          Potência desejada limitada pela área útil disponível. Considere ajustar a meta ou revisar o segmento selecionado.
-        </div>
-      )}
+      {dimensioningCapped ? (
+        <div className="alert">Potência limitada pela área disponível. Ajuste a meta ou revise o segmento.</div>
+      ) : null}
 
       {summary && monthlyResults ? (
-        <div ref={resultsRef} style={{ display: 'grid', gap: '1.5rem' }}>
-          <div className="results-grid">
-            <div className="summary-card">
-              <span>Potência dimensionada</span>
-              <strong>{formatNumber(summary.kwp, 2)} kWp</strong>
-              <span className="input-helper">Limite pela área útil: {formatNumber(summary.kwpMax, 2)} kWp</span>
-            </div>
-            <div className="summary-card">
-              <span>Geração média mensal</span>
-              <strong>{formatNumber(summary.avgMonthlyGenerationKWh, 1)} kWh</strong>
-              <span className="input-helper">Total anual estimado: {formatNumber(summary.annualGenerationKWh, 0)} kWh</span>
-            </div>
-            <div className="summary-card">
-              <span>Economia mensal estimada</span>
+        <div ref={resultsRef} className="results-wrapper">
+          <div className="summary-cards">
+            <article>
+              <h3>Economia mensal</h3>
               <strong>{formatCurrency(summary.monthlySavingsBRL)}</strong>
               <span className="input-helper">Tarifa aplicada: {formatCurrency(summary.tariffApplied)}</span>
-            </div>
-            <div className="summary-card">
-              <span>Meta de compensação</span>
-              <strong>{summary.compensationTargetPct}%</strong>
-              <span className="input-helper">Inclinação β: {formatNumber(angles.betaDeg, 1)}° – Azimute γ: {formatNumber(angles.gammaDeg, 0)}°</span>
-            </div>
+            </article>
+            <article>
+              <h3>Potência instalada</h3>
+              <strong>{formatNumber(summary.kwp, 2)} kWp</strong>
+              <span className="input-helper">Limite pela área útil: {formatNumber(summary.kwpMax, 2)} kWp</span>
+            </article>
+            <article>
+              <h3>Geração média</h3>
+              <strong>{formatNumber(summary.avgMonthlyGenerationKWh, 1)} kWh/mês</strong>
+              <span className="input-helper">Total anual: {formatNumber(summary.annualGenerationKWh, 0)} kWh</span>
+            </article>
           </div>
+
+          <button type="button" className="link-button" onClick={() => setStep(1)}>
+            Refinar telhado ou segmento
+          </button>
 
           {staticMapUrl ? (
-            <figure style={{ margin: 0 }}>
-              <img src={staticMapUrl} alt="Miniatura do telhado selecionado" style={{ width: '100%', borderRadius: 14 }} />
-              <figcaption style={{ fontSize: '0.75rem', color: '#64748b', marginTop: '0.35rem' }}>
-                Map data © Google — visualize o polígono selecionado.
-              </figcaption>
+            <figure className="static-map">
+              <img src={staticMapUrl} alt="Miniatura do telhado selecionado" />
+              <figcaption>Map data © Google — polígono usado para cálculo.</figcaption>
             </figure>
-          ) : (
-            <p className="input-helper">
-              {dataSource === 'SOLAR_API'
-                ? 'A Solar API não fornece polígono detalhado neste MVP. Utilize o modo manual para gerar a miniatura personalizada.'
-                : 'Defina telhado e chave de API para gerar a imagem estática.'}
-            </p>
-          )}
+          ) : null}
 
-          <MonthlyGenerationChart data={monthlyResults} />
+          <p className="input-helper">
+            Ângulos considerados: β {formatNumber(angles.betaDeg, 1)}° e γ {formatNumber(angles.gammaDeg, 0)}°.
+          </p>
 
-          <div className="table-wrapper">
-            <table>
-              <thead>
-                <tr>
-                  <th>Mês</th>
-                  <th>HPOA (kWh/m²)</th>
-                  <th>Yield (kWh/kWp)</th>
-                  <th>Geração (kWh)</th>
-                  <th>Economia (R$)</th>
-                  <th>Faixa (kWh)</th>
-                </tr>
-              </thead>
-              <tbody>
-                {monthlyResults.map((item) => (
-                  <tr key={item.month}>
-                    <td>{item.month}</td>
-                    <td>{formatNumber(item.hpoa, 1)}</td>
-                    <td>{formatNumber(item.specificYield, 1)}</td>
-                    <td>{formatNumber(item.energyKWh, 1)}</td>
-                    <td>{formatCurrency(item.savingsBRL)}</td>
-                    <td>
-                      {formatNumber(item.uncertaintyLow, 1)} – {formatNumber(item.uncertaintyHigh, 1)}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+          <div className="chart-section">
+            <h3>Geração estimada por mês</h3>
+            <MonthlyGenerationChart data={monthlyResults} />
           </div>
 
+          <button
+            type="button"
+            className="link-button"
+            onClick={() => setTableExpanded((prev) => !prev)}
+          >
+            {tableExpanded ? 'Ocultar tabela detalhada' : 'Ver tabela detalhada'}
+          </button>
+
+          {tableExpanded ? (
+            <div className="table-wrapper">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Mês</th>
+                    <th>HPOA (kWh/m²)</th>
+                    <th>Yield (kWh/kWp)</th>
+                    <th>Geração (kWh)</th>
+                    <th>Economia (R$)</th>
+                    <th>Faixa (kWh)</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {monthlyResults.map((item) => (
+                    <tr key={item.month}>
+                      <td>{item.month}</td>
+                      <td>{formatNumber(item.hpoa, 1)}</td>
+                      <td>{formatNumber(item.specificYield, 1)}</td>
+                      <td>{formatNumber(item.energyKWh, 1)}</td>
+                      <td>{formatCurrency(item.savingsBRL)}</td>
+                      <td>
+                        {formatNumber(item.uncertaintyLow, 1)} – {formatNumber(item.uncertaintyHigh, 1)}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          ) : null}
+
           <div className="alert" role="note">
-            Estimativa sujeita a variação de ±{Math.round(solar.uncertaintyPct * 100)}%.{' '}
-            {dataSource === 'SOLAR_API'
-              ? 'Dados de segmento fornecidos pela Solar API; irradiância complementar via NASA POWER quando necessário.'
-              : `Dados de radiação obtidos via NASA POWER. Inclinação padrão ${solar.defaultTiltDeg}° com ajuste manual permitido.`}
+            Estimativa sujeita a variação de ±{Math.round(solar.uncertaintyPct * 100)}%. Dados climáticos complementares NASA POWER.
           </div>
         </div>
       ) : (
-        <p className="input-helper">
-          Execute o cálculo para visualizar geração, economia e exportar o relatório em PDF.
-        </p>
-      )}
-
-      <div className="action-bar" style={{ marginTop: '1.5rem' }}>
-        <button type="button" className="secondary-button" onClick={() => setStep(1)}>
-          Refinar telhado
-        </button>
-        <div style={{ display: 'flex', gap: '0.75rem' }}>
-          <button type="button" className="secondary-button" onClick={() => setStep(0)}>
-            Voltar ao endereço
-          </button>
-          <PdfExportButton
-            targetRef={resultsRef}
-            fileName={`economia-solar-${place?.formattedAddress?.replace(/[^a-z0-9]+/gi, '-').toLowerCase() ?? 'relatorio'}.pdf`}
-            title="Economia Solar — Estimativa"
-            subtitle={place?.formattedAddress}
-            notes={pdfNotes}
-          />
+        <div className="loading-block">
+          {isCalculating ? 'Calculando estimativas…' : 'Clique em “Ver Resultados” na etapa anterior para iniciar o cálculo.'}
         </div>
-      </div>
+      )}
     </section>
   )
 }

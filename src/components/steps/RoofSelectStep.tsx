@@ -1,4 +1,4 @@
-import { useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useAppState } from '../../context/AppStateContext'
 import { MapCanvas } from '../maps/MapCanvas'
 import { StaticThumbnails } from '../maps/StaticThumbnails'
@@ -6,6 +6,7 @@ import { buildRoofSelection } from '../../hooks/useRoofGeometry'
 import type { LatLngPoint } from '../../types/domain'
 import { formatNumber } from '../../utils/formatting'
 import { SolarSegmentPicker } from '../segments/SolarSegmentPicker'
+import { useLayout } from '../../context/LayoutContext'
 
 export function RoofSelectStep() {
   const {
@@ -17,6 +18,7 @@ export function RoofSelectStep() {
     previousStep,
     clearResults,
   } = useAppState()
+  const { setLayout, resetLayout } = useLayout()
   const [path, setPath] = useState<LatLngPoint[]>(roof?.polygon ?? [])
   const mapHelpersRef = useRef<{
     setCenter: (position: LatLngPoint, zoom?: number) => void
@@ -24,6 +26,27 @@ export function RoofSelectStep() {
   } | null>(null)
 
   const roofData = useMemo(() => buildRoofSelection(path), [path])
+  const isManual = dataSource === 'MANUAL'
+  const canContinue = isManual ? roofData.hasPolygon : Boolean(solarSelection.segmentId)
+
+  const handleNext = useCallback(() => {
+    if (!canContinue) return
+    nextStep()
+  }, [canContinue, nextStep])
+
+  useEffect(() => {
+    setLayout({
+      title: 'Seleção do telhado',
+      subtitle: isManual
+        ? 'Desenhe manualmente a área disponível para os módulos.'
+        : 'Escolha o segmento identificado automaticamente pela Solar API.',
+      actions: [
+        { label: 'Voltar', onClick: previousStep, variant: 'secondary' },
+        { label: 'Prosseguir', onClick: handleNext, disabled: !canContinue, variant: 'primary' },
+      ],
+    })
+    return () => resetLayout()
+  }, [canContinue, handleNext, isManual, previousStep, resetLayout, setLayout])
 
   const applyRoofSelection = (points: LatLngPoint[]) => {
     setPath(points)
@@ -33,17 +56,6 @@ export function RoofSelectStep() {
       setRoof(selection)
     } else {
       setRoof(null)
-    }
-  }
-
-  const handleNext = () => {
-    if (dataSource === 'MANUAL') {
-      if (!roofData.hasPolygon) return
-      nextStep()
-      return
-    }
-    if (solarSelection.segmentId) {
-      nextStep()
     }
   }
 
@@ -71,8 +83,8 @@ export function RoofSelectStep() {
     }
     if (!segments.length) {
       return (
-        <div className="summary-card">
-          <p className="input-helper">Não encontramos segmentos disponíveis. Estamos migrando para o modo manual.</p>
+        <div className="alert" role="note">
+          Não encontramos segmentos disponíveis para este endereço. Utilize o modo manual.
         </div>
       )
     }
@@ -115,7 +127,7 @@ export function RoofSelectStep() {
         </div>
         <div>
           <strong>{formatNumber(roofData.usableAreaM2, 1)} m²</strong>
-          <span>Área útil (fator 70%)</span>
+          <span>Área útil considerada (fator 70%)</span>
         </div>
         <p className="input-helper">
           Ajuste os vértices para abranger apenas a área disponível para módulos fotovoltaicos.
@@ -125,7 +137,7 @@ export function RoofSelectStep() {
       <div>
         <h3 style={{ margin: '0 0 0.5rem', fontSize: '1rem' }}>Explorar ao redor</h3>
         <p className="input-helper" style={{ marginBottom: '0.75rem' }}>
-          Selecione uma miniatura para recentralizar o mapa em telhados próximos.
+          Toque em uma miniatura para reposicionar o mapa em telhados vizinhos.
         </p>
         <button
           type="button"
@@ -133,7 +145,7 @@ export function RoofSelectStep() {
           onClick={() => mapHelpersRef.current?.activatePolygonDrawing()}
           style={{ marginBottom: '0.75rem' }}
         >
-          Ativar desenho de polígono
+          Redesenhar polígono
         </button>
         {place?.location ? (
           <StaticThumbnails
@@ -148,45 +160,20 @@ export function RoofSelectStep() {
     </div>
   )
 
-  const isManual = dataSource === 'MANUAL'
-
   return (
-    <section className="section-card" aria-labelledby="roof-step-title">
-      <header>
-        <h2 id="roof-step-title" className="section-title">
-          2. {isManual ? 'Desenhe o telhado' : 'Selecione o segmento do telhado'}
-        </h2>
-        <p className="section-subtitle">
-          {isManual
-            ? 'Utilize a ferramenta de polígono para contornar o telhado. Edite os vértices conforme necessário.'
-            : 'Escolha o segmento identificado automaticamente pela Solar API.'}
-        </p>
-      </header>
-
-      {!isManual && solarStatus === 'error' && (
-        <div className="alert error-alert" role="alert" style={{ marginBottom: '1rem' }}>
-          Não foi possível obter dados da Solar API. O assistente retornou ao modo manual automaticamente.
-        </div>
-      )}
+    <section className="card" aria-labelledby="roof-step-title">
+      <h2 id="roof-step-title">Selecione o telhado</h2>
+      <p className="input-helper">
+        {isManual
+          ? 'Desenhe manualmente a área do telhado no mapa. O polígono precisa estar fechado para continuar.'
+          : 'Escolha o segmento que melhor representa a área utilizável do seu telhado.'}
+      </p>
 
       {isManual ? renderManualContent() : renderSolarContent()}
 
-      <div className="action-bar">
-        <button type="button" className="secondary-button" onClick={previousStep}>
-          Voltar
-        </button>
-        <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap', alignItems: 'center' }}>
-          {isManual && !roofData.hasPolygon && <span className="input-helper">Desenhe o polígono para continuar.</span>}
-          <button
-            type="button"
-            className="primary-button"
-            onClick={handleNext}
-            disabled={isManual ? !roofData.hasPolygon : !solarSelection.segmentId}
-          >
-            Prosseguir
-          </button>
-        </div>
-      </div>
+      {isManual && !roofData.hasPolygon ? (
+        <span className="input-helper">Desenhe um polígono válido para liberar a continuação.</span>
+      ) : null}
     </section>
   )
 }

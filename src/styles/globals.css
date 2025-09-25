@@ -36,42 +36,124 @@ a {
   border: 0;
 }
 
-.app-container {
+.app-shell {
   display: flex;
   flex-direction: column;
   min-height: 100vh;
 }
 
-main {
+.navbar {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 0.8rem 1.5rem;
+  background: #ffffff;
+  border-bottom: 1px solid rgba(15, 23, 42, 0.1);
+}
+
+.navbar-menu {
+  border: none;
+  background: rgba(14, 165, 233, 0.12);
+  color: #0f172a;
+  font-size: 1.4rem;
+  width: 2.4rem;
+  height: 2.4rem;
+  border-radius: 999px;
+  cursor: pointer;
+}
+
+.navbar-texts h1 {
+  margin: 0;
+  font-size: 1.2rem;
+  font-weight: 700;
+}
+
+.navbar-texts p {
+  margin: 0.1rem 0 0;
+  color: #6c7280;
+  font-size: 0.85rem;
+}
+
+.app-main {
   flex: 1;
+  padding: 1rem 0 6rem;
 }
 
-.container {
-  width: min(1100px, 90vw);
+.app-main-inner {
+  width: min(1100px, 92vw);
   margin: 0 auto;
-  padding: 1.5rem 0 3rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
 }
 
+.app-content {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.bottom-actions {
+  position: sticky;
+  bottom: 0;
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(6px);
+  border-top: 1px solid rgba(15, 23, 42, 0.08);
+  padding: 0.75rem 0;
+}
+
+.bottom-actions-content {
+  width: min(1100px, 92vw);
+  margin: 0 auto;
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.75rem;
+}
+
+.bottom-action {
+  border-radius: 999px;
+  padding: 0.65rem 1.5rem;
+  border: none;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.bottom-action.primary {
+  background: linear-gradient(120deg, #0ea5e9, #2563eb);
+  color: white;
+  box-shadow: 0 6px 16px rgba(37, 99, 235, 0.25);
+}
+
+.bottom-action.primary:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  box-shadow: none;
+}
+
+.bottom-action.secondary {
+  background: #eef2ff;
+  color: #1e3a8a;
+}
+
+.card,
 .section-card {
   background: #ffffff;
   border-radius: 16px;
   box-shadow: 0 8px 24px rgba(15, 23, 42, 0.08);
   padding: 1.5rem;
-  margin-bottom: 1.5rem;
-}
-
-.section-title {
-  font-size: 1.25rem;
-  margin: 0 0 1rem;
   display: flex;
-  align-items: center;
-  gap: 0.5rem;
+  flex-direction: column;
+  gap: 1rem;
 }
 
-.section-subtitle {
-  font-size: 0.95rem;
-  color: #5f6b7d;
-  margin: 0 0 1rem;
+.disclaimer {
+  font-size: 0.75rem;
+  color: #94a3b8;
+  text-align: center;
+  margin: 2rem 0 0;
 }
 
 .form-grid {
@@ -109,6 +191,10 @@ main {
 .input-helper {
   font-size: 0.8rem;
   color: #6c7789;
+}
+
+.input-helper.error {
+  color: #dc2626;
 }
 
 .action-bar {
@@ -315,7 +401,219 @@ table th,
     width: 100%;
     text-align: center;
   }
-  .map-container {
-    min-height: 260px;
+  .bottom-actions-content {
+    justify-content: center;
   }
+  .navbar {
+    gap: 0.6rem;
+  }
+  .navbar-menu {
+    width: 2.2rem;
+    height: 2.2rem;
+  }
+}
+.link-button {
+  border: none;
+  background: none;
+  color: #2563eb;
+  font-weight: 600;
+  align-self: flex-start;
+  cursor: pointer;
+  padding: 0;
+}
+
+.link-button:hover {
+  text-decoration: underline;
+}
+
+.advanced-panel {
+  display: grid;
+  gap: 1rem;
+  border: 1px solid rgba(148, 163, 184, 0.35);
+  border-radius: 14px;
+  padding: 1rem;
+  background: #f8fafc;
+}
+
+.results-wrapper {
+  display: grid;
+  gap: 1.5rem;
+}
+
+.summary-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 1rem;
+}
+
+.summary-cards article {
+  padding: 1rem;
+  border-radius: 14px;
+  background: #f8fbff;
+  border: 1px solid rgba(148, 163, 184, 0.25);
+}
+
+.summary-cards h3 {
+  margin: 0;
+  font-size: 0.95rem;
+  color: #475569;
+}
+
+.summary-cards strong {
+  display: block;
+  margin: 0.45rem 0;
+  font-size: 1.5rem;
+}
+
+.static-map {
+  margin: 0;
+  display: grid;
+  gap: 0.4rem;
+}
+
+.static-map img {
+  width: 100%;
+  border-radius: 16px;
+  border: 1px solid rgba(148, 163, 184, 0.35);
+}
+
+.static-map figcaption {
+  font-size: 0.75rem;
+  color: #6c7280;
+}
+
+.chart-section {
+  background: white;
+  border-radius: 16px;
+  border: 1px solid rgba(148, 163, 184, 0.25);
+  padding: 1rem;
+}
+
+.chart-section h3 {
+  margin: 0 0 0.75rem;
+}
+
+.loading-block {
+  padding: 1rem;
+  border-radius: 12px;
+  background: rgba(14, 165, 233, 0.08);
+  color: #0f172a;
+}
+
+.modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+  z-index: 40;
+}
+
+.modal-container {
+  background: #ffffff;
+  border-radius: 18px;
+  width: min(760px, 92vw);
+  max-height: 90vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.modal-container.large-modal {
+  width: min(1040px, 96vw);
+}
+
+.modal-header,
+.modal-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem 1.5rem;
+  border-bottom: 1px solid rgba(148, 163, 184, 0.25);
+}
+
+.modal-footer {
+  border-top: 1px solid rgba(148, 163, 184, 0.25);
+  border-bottom: none;
+}
+
+.modal-header button {
+  border: none;
+  background: none;
+  font-size: 1.5rem;
+  cursor: pointer;
+}
+
+.modal-body {
+  padding: 1rem 1.5rem 1.5rem;
+  display: grid;
+  gap: 0.75rem;
+}
+
+.manual-roof-body {
+  grid-template-columns: minmax(0, 2fr) minmax(320px, 1fr);
+  gap: 1rem;
+  height: min(72vh, 620px);
+}
+
+.manual-roof-map {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  height: 100%;
+}
+
+.manual-roof-map .map-container {
+  flex: 1;
+  min-height: 320px;
+}
+
+.manual-roof-actions {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.manual-roof-sidebar {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  overflow-y: auto;
+  padding-right: 0.25rem;
+}
+
+.angle-card {
+  display: grid;
+  gap: 1rem;
+}
+
+.segment-picker-wrapper {
+  display: grid;
+  gap: 0.5rem;
+}
+
+.manual-mode-callout {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.75rem 1rem;
+  background: rgba(37, 99, 235, 0.08);
+  border-radius: 12px;
+}
+
+@media (max-width: 900px) {
+  .manual-roof-body {
+    grid-template-columns: 1fr;
+    height: auto;
+  }
+
+  .manual-roof-sidebar {
+    max-height: 40vh;
+  }
+}
+
+.bottom-actions + .modal-backdrop {
+  z-index: 50;
 }

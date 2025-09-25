@@ -1,24 +1,36 @@
-import { useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { useAppState } from '../../context/AppStateContext'
-import { MapCanvas } from '../maps/MapCanvas'
 import { useGoogleMapsApi } from '../../hooks/useMap'
-import type { LatLngPoint } from '../../types/domain'
 import { useSolarData } from '../../hooks/useSolarData'
+import { useLayout } from '../../context/LayoutContext'
+import type { LatLngPoint, PlaceSelection } from '../../types/domain'
+import { MapModal } from '../modals/MapModal'
+import { ManualRoofModal } from '../modals/ManualRoofModal'
+import { SolarSegmentPicker } from '../segments/SolarSegmentPicker'
 
 const DEFAULT_CENTER: LatLngPoint = { lat: -23.55052, lng: -46.633308 }
 
 export function AddressStep() {
   const {
-    state: { place, solarStatus },
+    state: { place, solarStatus, solarInsights, solarSelection, dataSource, roof },
     setPlace,
     setRoof,
+    setSolarSelection,
+    setAngles,
+    setDataSource,
     clearResults,
     nextStep,
     setNasaError,
   } = useAppState()
-  const { loadSolarInsights } = useSolarData()
+  const { loadSolarInsights, forceManual } = useSolarData()
+  const { setLayout, resetLayout } = useLayout()
 
   const [inputValue, setInputValue] = useState(place?.formattedAddress ?? '')
+  const [isMapModalOpen, setMapModalOpen] = useState(false)
+  const [isManualModalOpen, setManualModalOpen] = useState(false)
+  const [modalPosition, setModalPosition] = useState<LatLngPoint>(place?.location ?? DEFAULT_CENTER)
+  const [selectionError, setSelectionError] = useState<string | null>(null)
+
   const inputRef = useRef<HTMLInputElement>(null)
   const autocompleteRef = useRef<google.maps.places.Autocomplete | null>(null)
   const { status } = useGoogleMapsApi()
@@ -41,17 +53,18 @@ export function AddressStep() {
       }
       setNasaError(null)
       const location = result.geometry.location
-      const selectedPlace = {
+      const selectedPlace: PlaceSelection = {
         formattedAddress: result.formatted_address ?? 'Endereço selecionado',
         placeId: result.place_id ?? undefined,
         location: { lat: location.lat(), lng: location.lng() },
       }
       setPlace(selectedPlace)
       setRoof(null)
+      setSolarSelection({ segmentId: null })
       clearResults()
       void loadSolarInsights(selectedPlace.location)
     })
-  }, [status, setNasaError, setPlace, setRoof, clearResults, loadSolarInsights])
+  }, [status, setNasaError, setPlace, setRoof, setSolarSelection, clearResults, loadSolarInsights])
 
   useEffect(() => {
     if (place?.formattedAddress && place.formattedAddress !== inputValue) {
@@ -59,38 +72,103 @@ export function AddressStep() {
     }
   }, [place, inputValue])
 
-  const handleMarkerMoved = (position: LatLngPoint) => {
-    const label = place?.formattedAddress ?? 'Ponto ajustado manualmente'
-    setPlace({ formattedAddress: label, location: position, placeId: place?.placeId })
-    setRoof(null)
-    clearResults()
-    void loadSolarInsights(position)
-  }
+  const segments = solarInsights?.segments ?? []
+  const hasManualPolygon = Boolean(roof?.polygon && roof.polygon.length >= 3)
+  const hasSegmentSelection = Boolean(solarSelection.segmentId)
+  const canContinue = Boolean(
+    place &&
+      ((dataSource === 'SOLAR_API' && (segments.length === 0 || hasSegmentSelection)) ||
+        (dataSource === 'MANUAL' && hasManualPolygon))
+  )
 
-  const handleSubmit = (event: React.FormEvent) => {
-    event.preventDefault()
+  const handleContinue = useCallback(() => {
     if (!place) {
+      setSelectionError('Selecione um endereço válido para continuar.')
       setNasaError('Selecione um endereço válido para continuar.')
       return
     }
+    if (dataSource === 'SOLAR_API' && segments.length > 0 && !hasSegmentSelection) {
+      setSelectionError('Escolha um dos segmentos sugeridos pela Solar API.')
+      setNasaError('Escolha um segmento para prosseguir.')
+      return
+    }
+    if (dataSource === 'MANUAL' && !hasManualPolygon) {
+      setSelectionError('Desenhe o polígono do telhado no modo manual.')
+      setNasaError('Desenhe um polígono válido para continuar.')
+      return
+    }
+    setSelectionError(null)
     setNasaError(null)
     nextStep()
+  }, [dataSource, hasManualPolygon, hasSegmentSelection, nextStep, place, segments.length, setNasaError])
+
+  useEffect(() => {
+    setLayout({
+      title: 'Endereço',
+      subtitle: 'Informe o endereço onde os painéis serão instalados.',
+      actions: [
+        {
+          label: solarStatus === 'loading' ? 'Carregando…' : 'Continuar',
+          onClick: handleContinue,
+          disabled: !canContinue || solarStatus === 'loading',
+          variant: 'primary',
+        },
+      ],
+    })
+    return () => resetLayout()
+  }, [canContinue, handleContinue, resetLayout, setLayout, solarStatus])
+
+  const openMapModal = () => {
+    if (!place) return
+    setModalPosition(place.location)
+    setMapModalOpen(true)
   }
 
-  const center = place?.location ?? DEFAULT_CENTER
+  const handleModalUpdate = (position: LatLngPoint) => {
+    setModalPosition(position)
+  }
+
+  const handleModalConfirm = () => {
+    if (!place) {
+      setMapModalOpen(false)
+      return
+    }
+    const updatedPlace: PlaceSelection = {
+      formattedAddress: place.formattedAddress ?? 'Local ajustado',
+      placeId: place.placeId,
+      location: modalPosition,
+    }
+    setPlace(updatedPlace)
+    setRoof(null)
+    setSolarSelection({ segmentId: null })
+    clearResults()
+    void loadSolarInsights(modalPosition)
+    setMapModalOpen(false)
+  }
+
+  const handleSegmentSelect = (segmentId: string) => {
+    setSelectionError(null)
+    clearResults()
+    setSolarSelection({ segmentId, source: 'SOLAR_API', manualOverride: false })
+    const segment = segments.find((item) => item.segmentId === segmentId)
+    if (segment) {
+      setAngles({ betaDeg: segment.pitchDegrees, gammaDeg: segment.azimuthDegrees })
+    }
+    setDataSource('SOLAR_API')
+  }
+
+  const openManualModal = () => {
+    setSelectionError(null)
+    forceManual()
+    setManualModalOpen(true)
+  }
 
   return (
-    <section className="section-card" aria-labelledby="address-step-title">
-      <header>
-        <h2 className="section-title" id="address-step-title">
-          1. Localize o endereço
-        </h2>
-        <p className="section-subtitle">
-          Use a busca com sugestão do Google Places e ajuste o marcador se necessário.
-        </p>
-      </header>
+    <section className="card" aria-labelledby="address-step-title">
+      <h2 id="address-step-title">Informe o endereço</h2>
+      <p className="input-helper">Digite e selecione o endereço do imóvel.</p>
 
-      <form className="form-grid" onSubmit={handleSubmit}>
+      <div className="form-grid">
         <div className="input-group">
           <label htmlFor="address-input">Endereço</label>
           <input
@@ -98,36 +176,67 @@ export function AddressStep() {
             ref={inputRef}
             value={inputValue}
             onChange={(event) => setInputValue(event.target.value)}
-            placeholder="Digite o endereço e selecione na lista"
-            aria-describedby="address-helper"
+            placeholder="Rua, número, bairro, cidade"
           />
-          <span id="address-helper" className="input-helper">
-            Para melhores resultados, informe endereço completo com número e cidade.
-          </span>
+          <div className="input-helper">
+            {place ? `Endereço selecionado: ${place.formattedAddress}` : 'Selecione uma opção sugerida para prosseguir.'}
+          </div>
         </div>
 
-        <MapCanvas
-          center={center}
-          zoom={20}
-          mode="marker"
-          markerOptions={{
-            draggable: true,
-            position: center,
-            onPositionChanged: handleMarkerMoved,
-          }}
-        />
+        <button
+          type="button"
+          className="secondary-button"
+          onClick={openMapModal}
+          disabled={!place}
+        >
+          Ajustar localização no mapa
+        </button>
 
-        <div className="action-bar">
-          <span className="input-helper">
-            {solarStatus === 'loading'
-              ? 'Buscando dados da Solar API…'
-              : 'Marque o telhado desejado arrastando o marcador azul.'}
-          </span>
-          <button type="submit" className="primary-button" disabled={!place}>
-            Continuar para o telhado
-          </button>
+        {solarStatus === 'loading' ? (
+          <span className="input-helper">Buscando dados do telhado…</span>
+        ) : null}
+      </div>
+
+      {segments.length > 0 && dataSource === 'SOLAR_API' ? (
+        <div className="segment-picker-wrapper">
+          <h3>Segmentos identificados automaticamente</h3>
+          <p className="input-helper">
+            Escolha a cobertura que melhor representa o telhado desejado. Os dados de inclinação, orientação e área serão usados automaticamente.
+          </p>
+          <SolarSegmentPicker
+            segments={segments}
+            selectedId={solarSelection.segmentId ?? null}
+            onSelect={handleSegmentSelect}
+          />
         </div>
-      </form>
+      ) : null}
+
+      <div className="manual-mode-callout">
+        <p className="input-helper">
+          Não encontrou o telhado correto ou prefere desenhar manualmente?
+        </p>
+        <button type="button" className="link-button" onClick={openManualModal}>
+          Abrir modo manual de desenho
+        </button>
+      </div>
+
+      {dataSource === 'MANUAL' && !hasManualPolygon ? (
+        <div className="alert" role="note">
+          A Solar API não retornou dados para este endereço. Use o modo manual para desenhar o telhado e ajustar os ângulos.
+        </div>
+      ) : null}
+
+      {selectionError ? <div className="alert error-alert">{selectionError}</div> : null}
+
+      <MapModal
+        open={isMapModalOpen}
+        place={place}
+        onClose={() => setMapModalOpen(false)}
+        onUpdateLocation={handleModalUpdate}
+        onConfirm={handleModalConfirm}
+      />
+
+      <ManualRoofModal open={isManualModalOpen} onClose={() => setManualModalOpen(false)} />
     </section>
   )
 }
