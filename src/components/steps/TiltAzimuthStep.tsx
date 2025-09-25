@@ -4,7 +4,7 @@ import { MapCanvas } from '../maps/MapCanvas'
 import { GoniometerOverlay } from '../maps/GoniometerOverlay'
 import { clamp, formatNumber } from '../../utils/formatting'
 
-function buildSegmentStaticMap(azimuthDeg: number, segmentCenter?: { lat: number; lng: number }) {
+function buildSegmentStaticMap(segmentCenter?: { lat: number; lng: number }) {
   const apiKey = import.meta.env.VITE_GOOGLE_MAPS_API_KEY
   if (!apiKey || !segmentCenter) return null
   const url = new URL('https://maps.googleapis.com/maps/api/staticmap')
@@ -56,7 +56,7 @@ export function TiltAzimuthStep() {
 
   const isManual = dataSource === 'MANUAL'
   const selectedSegment = solarInsights?.segments.find((segment) => segment.segmentId === solarSelection.segmentId)
-  const segmentStaticMap = !isManual ? buildSegmentStaticMap(angles.gammaDeg, selectedSegment?.center) : null
+  const segmentStaticMap = !isManual ? buildSegmentStaticMap(selectedSegment?.center) : null
   const azimuthCardinal = selectedSegment ? cardinalDirectionFromAzimuth(selectedSegment.azimuthDegrees) : null
 
   return (
