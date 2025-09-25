@@ -1,7 +1,7 @@
 import { useCallback } from 'react'
 import { useAppState } from '../context/AppStateContext'
 import { fetchSolarBuildingInsights, isSolarApiNotFoundError } from '../services/solarApiClient'
-import type { LatLngPoint, SolarBuildingInsights, SolarSegment } from '../types/domain'
+import type { LatLngPoint, SolarSegment } from '../types/domain'
 
 function selectDefaultSegment(segments: SolarSegment[] | undefined) {
   if (!segments || segments.length === 0) return null
@@ -36,8 +36,7 @@ export function useSolarData() {
       }
       try {
         setSolarStatus('loading')
-        const raw = await fetchSolarBuildingInsights(location.lat, location.lng, apiKey)
-        const insights = raw as SolarBuildingInsights
+        const insights = await fetchSolarBuildingInsights(location.lat, location.lng, apiKey)
         setSolarInsights(insights)
         setSolarStatus('success')
         if (insights.segments.length > 0) {

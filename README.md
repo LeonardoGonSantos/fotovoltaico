@@ -41,8 +41,8 @@ Valores padrão definidos em `src/context/appConfig.ts`, mas sobrepostos via `.e
 ## Fluxo de UX
 1. **Endereço:** Autocomplete (Places). Ao confirmar o ponto, o app tenta consultar a Solar API e mostra “Buscando dados do seu telhado…”.
 2. **Telhado:**
-   - Se a Solar API retornar segmentos, eles são listados com inclinação, azimute, área e energia. O usuário escolhe um e pode optar por migrar para o modo manual.
-   - Se não houver dados (404/sem cobertura), o modo manual original é habilitado (polígono + thumbnails com Static Maps).
+   - Se a Solar API retornar segmentos, cartões apresentam inclinação, azimute, área e miniatura satélite para comparação; basta escolher um.
+   - Se não houver dados (404/sem cobertura), o assistente troca automaticamente para o modo manual (polígono + thumbnails com Static Maps).
 3. **Ângulos:**
    - Solar API: exibe β/γ identificados (somente leitura).
    - Manual: sliders β (14–22°) e γ (0–360°) com goniômetro interativo.

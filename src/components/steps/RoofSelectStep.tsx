@@ -5,7 +5,6 @@ import { StaticThumbnails } from '../maps/StaticThumbnails'
 import { buildRoofSelection } from '../../hooks/useRoofGeometry'
 import type { LatLngPoint } from '../../types/domain'
 import { formatNumber } from '../../utils/formatting'
-import { useSolarData } from '../../hooks/useSolarData'
 import { SolarSegmentPicker } from '../segments/SolarSegmentPicker'
 
 export function RoofSelectStep() {
@@ -18,8 +17,6 @@ export function RoofSelectStep() {
     previousStep,
     clearResults,
   } = useAppState()
-  const { forceManual } = useSolarData()
-
   const [path, setPath] = useState<LatLngPoint[]>(roof?.polygon ?? [])
   const mapHelpersRef = useRef<{
     setCenter: (position: LatLngPoint, zoom?: number) => void
@@ -59,10 +56,6 @@ export function RoofSelectStep() {
     }
   }
 
-  const handleManualMode = () => {
-    forceManual()
-  }
-
   const handlePolygonComplete = (points: LatLngPoint[]) => {
     applyRoofSelection(points)
   }
@@ -79,7 +72,7 @@ export function RoofSelectStep() {
     if (!segments.length) {
       return (
         <div className="summary-card">
-          <p className="input-helper">Não encontramos segmentos disponíveis. Use o modo manual.</p>
+          <p className="input-helper">Não encontramos segmentos disponíveis. Estamos migrando para o modo manual.</p>
         </div>
       )
     }
@@ -166,13 +159,13 @@ export function RoofSelectStep() {
         <p className="section-subtitle">
           {isManual
             ? 'Utilize a ferramenta de polígono para contornar o telhado. Edite os vértices conforme necessário.'
-            : 'Escolha o segmento identificado automaticamente pela Solar API ou ative o modo manual.'}
+            : 'Escolha o segmento identificado automaticamente pela Solar API.'}
         </p>
       </header>
 
       {!isManual && solarStatus === 'error' && (
         <div className="alert error-alert" role="alert" style={{ marginBottom: '1rem' }}>
-          Não foi possível obter dados da Solar API. Você pode seguir para o modo manual.
+          Não foi possível obter dados da Solar API. O assistente retornou ao modo manual automaticamente.
         </div>
       )}
 
@@ -183,11 +176,6 @@ export function RoofSelectStep() {
           Voltar
         </button>
         <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap', alignItems: 'center' }}>
-          {!isManual && (
-            <button type="button" className="secondary-button" onClick={handleManualMode}>
-              Ajustar manualmente
-            </button>
-          )}
           {isManual && !roofData.hasPolygon && <span className="input-helper">Desenhe o polígono para continuar.</span>}
           <button
             type="button"

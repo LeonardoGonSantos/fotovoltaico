@@ -1,22 +1,6 @@
-const cache = new Map<string, ParsedSolarInsights>()
+import type { LatLngPoint, SolarBuildingInsights, SolarSegment } from '../types/domain'
 
-interface ParsedSolarSegment {
-  segmentId: string
-  pitchDegrees: number
-  azimuthDegrees: number
-  groundAreaMeters2?: number
-  maxArrayAreaMeters2?: number
-  monthlyEnergyKwh?: number[]
-  annualEnergyKwh?: number
-  recommendedSystemKw?: number
-}
-
-interface ParsedSolarInsights {
-  lat: number
-  lng: number
-  coverageQuality: 'HIGH' | 'MEDIUM' | 'BASE' | 'LOW' | 'NONE' | 'UNKNOWN'
-  segments: ParsedSolarSegment[]
-}
+const cache = new Map<string, SolarBuildingInsights>()
 
 export class SolarApiError extends Error {
   public status: number
@@ -32,25 +16,51 @@ export function isSolarApiNotFoundError(error: unknown) {
   return error instanceof SolarApiError && error.status === 404
 }
 
+interface ApiSegmentSummary {
+  segmentId?: string
+  pitchDegrees?: number
+  azimuthDegrees?: number
+  groundAreaMeters2?: number
+  maxArrayAreaMeters2?: number
+  stats?: {
+    yearlyEnergyDcKwh?: number
+    monthlyEnergyDcKwh?: number[]
+    groundAreaMeters2?: number
+    dcCapacityKw?: number
+  }
+  center?: ApiLatLng
+}
+
+interface ApiSegmentStats {
+  pitchDegrees?: number
+  azimuthDegrees?: number
+  stats?: {
+    areaMeters2?: number
+    groundAreaMeters2?: number
+    yearlyEnergyDcKwh?: number
+    monthlyEnergyDcKwh?: number[]
+    dcCapacityKw?: number
+  }
+  center?: ApiLatLng
+}
+
+interface ApiLatLng {
+  latitude?: number
+  longitude?: number
+}
+
 interface BuildingInsightsResponse {
   solarPotential?: {
-    roofSegmentSummaries?: Array<{
-      segmentId?: string
-      pitchDegrees?: number
-      azimuthDegrees?: number
+    maxArrayAreaMeters2?: number
+    roofSegmentSummaries?: ApiSegmentSummary[]
+    roofSegmentStats?: ApiSegmentStats[]
+    wholeRoofStats?: {
+      areaMeters2?: number
       groundAreaMeters2?: number
-      maxArrayAreaMeters2?: number
-      stats?: {
-        yearlyEnergyDcKwh?: number
-        monthlyEnergyDcKwh?: number[]
-        dcCapacityKw?: number
-      }
-    }>
+    }
   }
-  center?: {
-    latitude?: number
-    longitude?: number
-  }
+  center?: ApiLatLng
+  coverageQuality?: 'HIGH' | 'MEDIUM' | 'BASE' | 'LOW' | 'NONE' | 'UNKNOWN'
 }
 
 function assureSegmentId(segmentId: string | undefined, index: number) {
@@ -60,23 +70,77 @@ function assureSegmentId(segmentId: string | undefined, index: number) {
   return `segment-${index + 1}`
 }
 
-function parseInsights(response: BuildingInsightsResponse): ParsedSolarInsights {
-  const { center, solarPotential } = response
-  const segments: ParsedSolarSegment[] = (solarPotential?.roofSegmentSummaries ?? []).map((segment, index) => ({
+function toLatLng(point?: ApiLatLng): LatLngPoint | undefined {
+  if (point?.latitude === undefined || point.longitude === undefined) {
+    return undefined
+  }
+  return { lat: point.latitude, lng: point.longitude }
+}
+
+function mapSummarySegments(
+  summaries: ApiSegmentSummary[] | undefined,
+  totalMaxArray: number | undefined
+): SolarSegment[] {
+  if (!summaries?.length) return []
+  return summaries.map((segment, index) => ({
     segmentId: assureSegmentId(segment.segmentId, index),
     pitchDegrees: segment.pitchDegrees ?? 18,
     azimuthDegrees: segment.azimuthDegrees ?? 0,
-    groundAreaMeters2: segment.groundAreaMeters2,
-    maxArrayAreaMeters2: segment.maxArrayAreaMeters2,
+    groundAreaMeters2: segment.stats?.groundAreaMeters2 ?? segment.groundAreaMeters2,
+    maxArrayAreaMeters2: segment.maxArrayAreaMeters2 ?? totalMaxArray,
     monthlyEnergyKwh: segment.stats?.monthlyEnergyDcKwh,
     annualEnergyKwh: segment.stats?.yearlyEnergyDcKwh,
     recommendedSystemKw: segment.stats?.dcCapacityKw,
+    center: toLatLng(segment.center),
   }))
+}
+
+function mapStatsSegments(
+  stats: ApiSegmentStats[] | undefined,
+  totalMaxArray: number | undefined,
+  totalArea: number | undefined
+): SolarSegment[] {
+  if (!stats?.length) return []
+  return stats.map((segment, index) => {
+    const areaMeters = segment.stats?.areaMeters2 ?? segment.stats?.groundAreaMeters2 ?? 0
+    const ratio = totalArea && totalArea > 0 ? areaMeters / totalArea : undefined
+    const maxArray = ratio && totalMaxArray ? totalMaxArray * ratio : undefined
+    return {
+      segmentId: `segment-${index + 1}`,
+      pitchDegrees: segment.pitchDegrees ?? 18,
+      azimuthDegrees: segment.azimuthDegrees ?? 0,
+      groundAreaMeters2: segment.stats?.groundAreaMeters2 ?? areaMeters,
+      maxArrayAreaMeters2: maxArray ?? areaMeters,
+      monthlyEnergyKwh: segment.stats?.monthlyEnergyDcKwh,
+      annualEnergyKwh: segment.stats?.yearlyEnergyDcKwh,
+      recommendedSystemKw: segment.stats?.dcCapacityKw,
+      center: toLatLng(segment.center),
+    }
+  })
+}
+
+function parseInsights(response: BuildingInsightsResponse): SolarBuildingInsights {
+  const { center, solarPotential, coverageQuality } = response
+
+  const totalArea =
+    solarPotential?.wholeRoofStats?.areaMeters2 ?? solarPotential?.wholeRoofStats?.groundAreaMeters2
+
+  const fromSummaries = mapSummarySegments(
+    solarPotential?.roofSegmentSummaries,
+    solarPotential?.maxArrayAreaMeters2
+  )
+  const fromStats = mapStatsSegments(
+    solarPotential?.roofSegmentStats,
+    solarPotential?.maxArrayAreaMeters2,
+    totalArea
+  )
+
+  const segments = fromSummaries.length > 0 ? fromSummaries : fromStats
 
   return {
     lat: center?.latitude ?? 0,
     lng: center?.longitude ?? 0,
-    coverageQuality: 'UNKNOWN',
+    coverageQuality: coverageQuality ?? 'UNKNOWN',
     segments,
   }
 }
@@ -84,7 +148,7 @@ function parseInsights(response: BuildingInsightsResponse): ParsedSolarInsights 
 export async function fetchSolarBuildingInsights(lat: number, lng: number, apiKey: string) {
   const cacheKey = `${lat.toFixed(4)},${lng.toFixed(4)}`
   if (cache.has(cacheKey)) {
-    return cache.get(cacheKey) as ParsedSolarInsights
+    return cache.get(cacheKey) as SolarBuildingInsights
   }
 
   const params = new URLSearchParams({

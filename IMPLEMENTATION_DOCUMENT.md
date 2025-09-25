@@ -3,7 +3,7 @@
 ## 1. Visão geral do produto e do MVP
 - **Economia Solar** é uma aplicação apenas front-end (React + TypeScript + Vite) que estima geração fotovoltaica e economia mensal.
 - Fluxo em 5 etapas com stepper: endereço → seleção do telhado → ângulos → conta de luz → resultados/exportação.
-- A versão atual prioriza a **Google Solar API (Building Insights)** para obter automaticamente segmentos do telhado (inclinação, azimute, área, energia). Quando não há cobertura ou o usuário prefere, o app retorna ao modo manual (polígono + ajustes β/γ + fator 70%).
+- A versão atual prioriza a **Google Solar API (Building Insights)** para obter automaticamente segmentos do telhado (inclinação, azimute, área, energia). Quando não há cobertura, o app retorna ao modo manual (polígono + ajustes β/γ + fator 70%).
 - Cálculos e gráficos são executados no browser: Chart.js para barras mensais, html2canvas + jsPDF para PDF. NASA POWER continua sendo o provedor de irradiância quando precisamos gerar estimativas próprias.
 
 ## 2. Arquitetura front-end
@@ -59,7 +59,7 @@ src/
 1. `AppStateContext` mantém estado global: `place`, `dataSource`, `solarInsights`, `solarSelection`, `roof`, `angles`, `bill`, resultados, status de carregamento.
 2. `AddressStep` usa Places Autocomplete; ao selecionar um endereço, chama `useSolarData().loadSolarInsights`, que consulta Solar API, atualiza `solarInsights` e já seleciona o segmento de maior área. Em caso de erro/404, troca automaticamente para `dataSource='MANUAL'`.
 3. `RoofSelectStep` reage a `dataSource`:
-   - `SOLAR_API`: renderiza `SolarSegmentPicker`, exibe β/γ/área/energia de cada segmento, permite “Ajustar manualmente”.
+- `SOLAR_API`: renderiza `SolarSegmentPicker`, exibe β/γ/área/energia de cada segmento com miniatura estática.
    - `MANUAL`: re-exibe `MapCanvas` com DrawingManager para polígono + thumbnails estáticos.
 4. `TiltAzimuthStep`: read-only com valores da Solar API ou sliders + goniômetro no modo manual.
 5. `useSolarCalc` coleta inputs e busca NASA POWER quando necessário. Se a Solar API já traz energia mensal, apenas escalona para meta de compensação; se não, utiliza os dados NASA + Liu–Jordan com β/γ obtidos da Solar API.
@@ -69,7 +69,7 @@ src/
 
 ### 3.1 Passos
 1. **Endereço** – Autocomplete; após seleção, marcador reposiciona o mapa e a tela mostra spinner “Buscando dados do seu telhado…”.
-2. **Telhado** – Caso haja retornos da Solar API, cartões listam cada `segmentId` com inclinação, azimute, área (útil ou estimada 70%), energia anual/mensal quando disponível. Botão “Ajustar manualmente” ativa o DrawingManager tradicional. Sem cobertura → modo manual direto.
+2. **Telhado** – Caso haja retornos da Solar API, cartões listam cada `segmentId` com inclinação, azimute, área (útil ou estimada 70%), energia anual/mensal quando disponível e uma miniatura do local. Se a API não trouxer dados, o fluxo muda automaticamente para o modo manual (DrawingManager + thumbnails vizinhos).
 3. **Ângulos** – Valores da Solar API ficam bloqueados (com mensagem informativa). Se manual, sliders 14–22° e 0–360° + goniômetro.
 4. **Conta de luz** – Formulário idêntico ao MVP original (gasto obrigatório, tarifa/consumo opcionais, meta 50–100%).
 5. **Resultados** – Botão “Calcular” roda `useSolarCalc`. Painéis exibem kWp dimensionado, limite por área, geração média/mensal, economia, meta. Gráfico Jan–Dez, tabela com HPOA/Yf/energia/economia/incerteza. Fonte (Solar API vs Manual) fica indicada no cabeçalho e nota explicativa. PDF inclui resumo e fonte.
@@ -81,7 +81,7 @@ Step 2 (Solar API):
 | Segmentos disponíveis (radio list)      |
 | [o] Segmento A  β=18°  γ=210°  65 m²     |
 | [ ] Segmento B  β=15°  γ=190°  42 m²     |
-| [ Ajustar manualmente ]                 |
+| [ Miniatura + radios de segmentos ]     |
 +-----------------------------------------+
 
 Step 2 (Fallback manual) mantém wireframe anterior.

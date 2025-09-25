@@ -28,6 +28,7 @@ export interface SolarSegment {
   monthlyEnergyKwh?: number[]
   annualEnergyKwh?: number
   recommendedSystemKw?: number
+  center?: LatLngPoint
 }
 
 export interface SolarBuildingInsights {

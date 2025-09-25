@@ -1,4 +1,4 @@
-import { useRef } from 'react'
+import { useCallback, useEffect, useRef } from 'react'
 import { useAppState } from '../../context/AppStateContext'
 import { useSolarCalc } from '../../hooks/useSolarCalc'
 import { PdfExportButton } from '../pdf/PdfExportButton'
@@ -43,9 +43,15 @@ export function ResultsStep() {
   const apiKey = import.meta.env.VITE_GOOGLE_MAPS_API_KEY
   const staticMapUrl = roof?.polygon && apiKey ? buildStaticMapUrl(roof.polygon, apiKey, roof.centroid) : null
 
-  const handleCalculate = () => {
+  const handleCalculate = useCallback(() => {
     void runCalculation()
-  }
+  }, [runCalculation])
+
+  useEffect(() => {
+    if (!summary && !isCalculating) {
+      handleCalculate()
+    }
+  }, [summary, isCalculating, handleCalculate])
 
   const sourceLabel = summary ? (dataSource === 'SOLAR_API' ? 'Fonte: Solar API' : 'Fonte: Manual (MVP)') : ''
   const pdfNotes =
