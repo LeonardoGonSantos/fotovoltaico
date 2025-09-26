@@ -12,8 +12,8 @@ flowchart TD
   B -- Sim --> E[Chama fetchSolarBuildingInsights]
   E --> F{Resposta possui segmentos?}
   F -- Sim --> G[Seleciona segmento de maior área]
-  G --> H[Define dataSource = "SOLAR_API" e ajusta ângulos]
-  F -- Não --> I[Define dataSource = "MANUAL"]
+  G --> H[Define dataSource = SOLAR_API e ajusta ângulos]
+  F -- Não --> I[Define dataSource = MANUAL]
   E -->|Erro 404/403/429| I
   E -->|Outros erros| J[Mensagem de falha + fallback manual]
   J --> I
@@ -44,7 +44,7 @@ stateDiagram-v2
 
 ```mermaid
 flowchart LR
-  Start[Botão "Calcular"] --> S{Fonte de dados}
+  Start[Botão Calcular] --> S{Fonte de dados}
   S -- SOLAR_API --> CheckSegment{Segmento selecionado?}
   CheckSegment -- Não --> Err1[Mensagem: selecione segmento]
   CheckSegment -- Sim --> HasEnergy{Segmento possui energia mensal/ anual?}
