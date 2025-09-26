@@ -52,6 +52,9 @@ Valores padrão definidos em `src/context/appConfig.ts`, mas sobrepostos via `.e
    - Manual: NASA POWER + Liu–Jordan, área útil = polígono × 70%.
    Gráfico (Chart.js), tabela mensal, alertas de incerteza e exportação PDF (html2canvas + jsPDF) permanecem.
 
+## Diagramas de fluxo
+- Consulte [`FLOW_DOCUMENTATION.md`](./FLOW_DOCUMENTATION.md) para visualizar, em Mermaid, o fluxo completo de seleção entre Solar API e modo manual, além do pipeline de cálculo e políticas de fallback.
+
 ## Integração Solar API
 - Endpoint usado: `buildingInsights:findClosest` com `requiredQuality=BASE`.
 - Campos aproveitados: `pitchDegrees`, `azimuthDegrees`, `groundAreaMeters2`, `maxArrayAreaMeters2`, `monthlyEnergyKwh`/`annualEnergyKwh`, `recommendedSystemKw`.
