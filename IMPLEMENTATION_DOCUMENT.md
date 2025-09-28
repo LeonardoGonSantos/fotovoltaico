@@ -162,7 +162,7 @@ export interface Summary {
 - **Validações**: gasto mensal obrigatório; tarifas/consumos negativos bloqueados; `aria-live` para mensagens.
 
 ## 9. Acessibilidade & responsividade
-- Stepper com `aria-current`, cartões/inputs navegáveis por teclado.
+- Stepper com `aria-current`, barra de progresso neutra e botões das etapas navegáveis por teclado.
 - SegmentPicker usa radios e descrição textual de β/γ/área/energia.
 - Layout responsivo (mobile-first). Gráfico com altura fixa e overflow horizontal em telas estreitas.
 - Goniômetro possui descrição e controles de teclado (setas) no modo manual.

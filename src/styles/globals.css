@@ -243,56 +243,128 @@ a {
 
 .stepper {
   display: flex;
-  flex-wrap: wrap;
-  gap: 0.75rem;
-  justify-content: space-between;
+  flex-direction: column;
+  gap: 1rem;
   padding: 1rem 1.5rem;
-  background: rgba(14, 165, 233, 0.08);
+  background: #ffffff;
   border-radius: 18px;
+  border: 1px solid #e5e7eb;
   margin-bottom: 1.5rem;
 }
 
-.stepper-item {
+.stepper-progress {
+  position: relative;
+  height: 6px;
+  border-radius: 9999px;
+  background: #f3f4f6;
+  overflow: hidden;
+}
+
+.stepper-progress-fill {
+  position: absolute;
+  inset: 0;
+  width: 0;
+  background: #1f2937;
+  transition: width 0.3s ease;
+}
+
+.stepper-list {
   display: flex;
-  align-items: center;
-  gap: 0.5rem;
+  flex-wrap: wrap;
+  gap: 1rem;
+  justify-content: space-between;
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.stepper-item {
+  flex: 1 1 0;
+  min-width: 200px;
 }
 
 .stepper-item button {
-  border: none;
+  width: 100%;
   background: none;
-  cursor: pointer;
-  font-weight: 600;
-  color: #334155;
+  border: none;
   display: flex;
-  align-items: center;
-  gap: 0.4rem;
-  padding: 0.35rem 0.6rem;
-  border-radius: 12px;
+  gap: 0.75rem;
+  align-items: flex-start;
+  text-align: left;
+  cursor: pointer;
+  padding: 0;
+  color: #111827;
 }
 
-.stepper-item button[aria-current='step'] {
-  background: white;
-  box-shadow: 0 4px 14px rgba(14, 165, 233, 0.25);
-  color: #0f172a;
+.stepper-item button:disabled {
+  cursor: default;
 }
 
-.badge {
+.stepper-item-upcoming button {
+  color: #6b7280;
+}
+
+.stepper-item-active button {
+  color: #1f2937;
+  font-weight: 600;
+}
+
+.stepper-index {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  border-radius: 50%;
-  width: 1.75rem;
-  height: 1.75rem;
+  width: 2rem;
+  height: 2rem;
+  border-radius: 9999px;
+  border: 1px solid #d1d5db;
   font-size: 0.9rem;
-  background: rgba(37, 99, 235, 0.12);
-  color: #1d4ed8;
-  font-weight: 700;
+  font-weight: 600;
+  background: #f9fafb;
+  color: inherit;
 }
 
-.badge-active {
-  background: linear-gradient(140deg, #38bdf8, #2563eb);
-  color: white;
+.stepper-item-complete .stepper-index {
+  background: #1f2937;
+  color: #ffffff;
+  border-color: #1f2937;
+}
+
+.stepper-text {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+}
+
+.stepper-title {
+  font-size: 0.95rem;
+  color: inherit;
+}
+
+.stepper-description {
+  font-size: 0.78rem;
+  color: #4b5563;
+}
+
+@media (max-width: 768px) {
+  .stepper {
+    padding: 1rem;
+  }
+
+  .stepper-list {
+    gap: 0.75rem;
+  }
+
+  .stepper-item {
+    min-width: 140px;
+  }
+
+  .stepper-title {
+    font-size: 0.9rem;
+  }
+
+  .stepper-description {
+    font-size: 0.75rem;
+  }
 }
 
 .map-container {
