@@ -95,12 +95,12 @@ export function GoniometerOverlay({ azimuthDeg, onAzimuthChange }: GoniometerOve
       <svg width={SIZE} height={SIZE} viewBox={`0 0 ${SIZE} ${SIZE}`}>
         <defs>
           <linearGradient id="goniometerGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-            <stop offset="0%" stopColor="#1d4ed8" stopOpacity="0.2" />
-            <stop offset="100%" stopColor="#38bdf8" stopOpacity="0.6" />
+            <stop offset="0%" stopColor="#d1d5db" stopOpacity="0.3" />
+            <stop offset="100%" stopColor="#4b5563" stopOpacity="0.6" />
           </linearGradient>
         </defs>
         <circle cx={SIZE / 2} cy={SIZE / 2} r={SIZE / 2 - 8} fill="url(#goniometerGradient)" stroke="#0f172a" strokeOpacity="0.12" strokeWidth="2" />
-        <circle cx={SIZE / 2} cy={SIZE / 2} r={SIZE / 2 - 36} fill="white" stroke="#cbd5f5" strokeWidth="1" />
+        <circle cx={SIZE / 2} cy={SIZE / 2} r={SIZE / 2 - 36} fill="white" stroke="#d1d5db" strokeWidth="1" />
         <text x={SIZE / 2} y={26} textAnchor="middle" fontSize="12" fill="#0f172a">N</text>
         <text x={SIZE - 24} y={SIZE / 2 + 4} textAnchor="middle" fontSize="12" fill="#0f172a">L</text>
         <text x={SIZE / 2} y={SIZE - 12} textAnchor="middle" fontSize="12" fill="#0f172a">S</text>
@@ -113,7 +113,7 @@ export function GoniometerOverlay({ azimuthDeg, onAzimuthChange }: GoniometerOve
           left: '50%',
           width: 4,
           height: SIZE / 2 - 16,
-          background: 'linear-gradient(180deg, #38bdf8, #2563eb)',
+          background: 'linear-gradient(180deg, #6b7280, #1f2937)',
           transformOrigin: 'center bottom',
           borderRadius: 999,
           pointerEvents: 'none',

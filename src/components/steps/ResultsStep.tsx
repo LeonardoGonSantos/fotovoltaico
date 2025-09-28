@@ -17,8 +17,8 @@ function buildStaticMapUrl(points: LatLngPoint[], apiKey: string, centroid: LatL
   const pathPoints = [...points, points[0]]
     .map((point) => `${point.lat.toFixed(6)},${point.lng.toFixed(6)}`)
     .join('|')
-  url.searchParams.append('path', `fillcolor:0x5538BDF8|color:0xFF2563EB|weight:3|${pathPoints}`)
-  url.searchParams.append('markers', `color:0x2563EB|${centroid.lat.toFixed(6)},${centroid.lng.toFixed(6)}`)
+  url.searchParams.append('path', `fillcolor:0x554B5563|color:0xFF1F2937|weight:3|${pathPoints}`)
+  url.searchParams.append('markers', `color:0x1F2937|${centroid.lat.toFixed(6)},${centroid.lng.toFixed(6)}`)
   return url.toString()
 }
 

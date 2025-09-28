@@ -8,7 +8,8 @@ Este documento descreve a organização das telas do assistente "Economia Solar"
   - Renderiza o `Stepper` com os rótulos das etapas.
   - Filhos: qualquer página (no MVP apenas `HomePage`).
 - **`Stepper` (`src/components/layout/Stepper.tsx`)**
-  - Exibe as etapas definidas em `AppStateContext`. Cada item é um botão.
+  - Mostra uma barra de progresso neutra (fundo branco, borda cinza-claro) e os rótulos das etapas.
+  - Permite retornar a etapas anteriores (botões habilitados até o passo atual) preservando títulos e descrições.
   - Props: `steps` (`StepDefinition[]`). Seleciona etapa via `useAppState().setStep`.
 - **`HomePage` (`src/routes/HomePage.tsx`)**
   - Seleciona dinamicamente o componente de etapa com base em `currentStepIndex`.
@@ -111,7 +112,8 @@ O estado global (`AppStateContext`) armazena: endereço (`place`), dados da Sola
 - `isCalculating`: controla botão de cálculo/disable + loader.
 
 ## 10. Observações de UI
-- Layout utiliza util classes CSS em `src/styles/globals.css` (cards, botões, inputs).
+- Layout utiliza util classes CSS em `src/styles/globals.css` (cards, botões, inputs) com paleta neutra (fundo branco, cinzas
+  claros, texto grafite).
 - Responsividade: grids transformam-se em colunas no mobile; imagens/static maps se ajustam ao container.
 - Acessibilidade: `aria-labels`, `visually-hidden` para mensagens, botões com estados e navegação por teclado no stepper.
 

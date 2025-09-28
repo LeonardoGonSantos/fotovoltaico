@@ -14,7 +14,7 @@ function buildSegmentStaticMap(segmentCenter?: { lat: number; lng: number }) {
   url.searchParams.set('scale', '2')
   url.searchParams.set('maptype', 'satellite')
   url.searchParams.set('key', apiKey)
-  url.searchParams.append('markers', `color:0x2563EB|label:T|${segmentCenter.lat.toFixed(6)},${segmentCenter.lng.toFixed(6)}`)
+  url.searchParams.append('markers', `color:0x1F2937|label:T|${segmentCenter.lat.toFixed(6)},${segmentCenter.lng.toFixed(6)}`)
   url.searchParams.append('path', `color:0xFFFFFFFF|weight:2|${segmentCenter.lat.toFixed(6)},${segmentCenter.lng.toFixed(6)}`)
   return url.toString()
 }

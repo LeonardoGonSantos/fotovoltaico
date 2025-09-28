@@ -11,29 +11,49 @@ export function Stepper({ steps }: StepperProps) {
     setStep,
   } = useAppState()
 
+  const totalSteps = steps.length
+  const maximumStepIndex = Math.max(totalSteps - 1, 1)
+  const progressPercent = (currentStepIndex / maximumStepIndex) * 100
+
   return (
     <nav className="stepper" aria-label="Fluxo principal do assistente">
-      {steps.map((step, index) => {
-        const isActive = index === currentStepIndex
-        const isEnabled = index <= currentStepIndex
+      <div
+        className="stepper-progress"
+        role="progressbar"
+        aria-valuemin={0}
+        aria-valuemax={totalSteps - 1}
+        aria-valuenow={currentStepIndex}
+        aria-valuetext={`Etapa ${currentStepIndex + 1} de ${totalSteps}`}
+      >
+        <div className="stepper-progress-fill" style={{ width: `${progressPercent}%` }} />
+      </div>
 
-        return (
-          <div className="stepper-item" key={step.key}>
-            <button
-              type="button"
-              onClick={() => isEnabled && setStep(index)}
-              disabled={!isEnabled}
-              aria-current={isActive ? 'step' : undefined}
-            >
-              <span className={`badge ${isActive ? 'badge-active' : ''}`}>{index + 1}</span>
-              <span>
-                <span style={{ display: 'block', fontSize: '0.85rem', opacity: 0.75 }}>{step.title}</span>
-                <span style={{ fontSize: '0.7rem', opacity: 0.6 }}>{step.description}</span>
-              </span>
-            </button>
-          </div>
-        )
-      })}
+      <ol className="stepper-list">
+        {steps.map((step, index) => {
+          const isActive = index === currentStepIndex
+          const isEnabled = index <= currentStepIndex
+          const status = isActive ? 'active' : index < currentStepIndex ? 'complete' : 'upcoming'
+
+          return (
+            <li className={`stepper-item stepper-item-${status}`} key={step.key}>
+              <button
+                type="button"
+                onClick={() => isEnabled && setStep(index)}
+                disabled={!isEnabled}
+                aria-current={isActive ? 'step' : undefined}
+              >
+                <span className="stepper-index" aria-hidden="true">
+                  {index + 1}
+                </span>
+                <span className="stepper-text">
+                  <span className="stepper-title">{step.title}</span>
+                  <span className="stepper-description">{step.description}</span>
+                </span>
+              </button>
+            </li>
+          )
+        })}
+      </ol>
     </nav>
   )
 }

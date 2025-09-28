@@ -12,7 +12,7 @@ function buildStaticMapUrl(segment: SolarSegment) {
   url.searchParams.set('scale', '2')
   url.searchParams.set('maptype', 'satellite')
   url.searchParams.set('key', apiKey)
-  url.searchParams.append('markers', `color:0x2563EB|${lat.toFixed(6)},${lng.toFixed(6)}`)
+  url.searchParams.append('markers', `color:0x4B5563|${lat.toFixed(6)},${lng.toFixed(6)}`)
   return url.toString()
 }
 
@@ -55,8 +55,8 @@ export function SolarSegmentPicker({ segments, selectedId, onSelect }: SolarSegm
             htmlFor={`segment-${segment.segmentId}`}
             className="summary-card"
             style={{
-              borderColor: isSelected ? '#2563eb' : undefined,
-              boxShadow: isSelected ? '0 0 0 2px rgba(37, 99, 235, 0.25)' : undefined,
+              borderColor: isSelected ? '#1f2937' : undefined,
+              boxShadow: isSelected ? '0 0 0 2px rgba(17, 24, 39, 0.25)' : undefined,
               cursor: 'pointer',
               display: 'grid',
               gap: '0.65rem',

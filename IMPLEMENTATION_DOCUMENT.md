@@ -73,6 +73,7 @@ src/
 3. **Ângulos** – Valores da Solar API ficam bloqueados (com mensagem informativa). Se manual, sliders 14–22° e 0–360° + goniômetro.
 4. **Conta de luz** – Formulário idêntico ao MVP original (gasto obrigatório, tarifa/consumo opcionais, meta 50–100%).
 5. **Resultados** – Botão “Calcular” roda `useSolarCalc`. Painéis exibem kWp dimensionado, limite por área, geração média/mensal, economia, meta. Gráfico Jan–Dez, tabela com HPOA/Yf/energia/economia/incerteza. Fonte (Solar API vs Manual) fica indicada no cabeçalho e nota explicativa. PDF inclui resumo e fonte.
+6. **Identidade visual** – Componentes compartilham a paleta neutra introduzida no stepper (fundo branco, bordas cinza-claro, tipografia grafite) consolidada em `src/styles/globals.css`.
 
 ### 3.2 Wireframe atualizado
 ```
@@ -162,7 +163,7 @@ export interface Summary {
 - **Validações**: gasto mensal obrigatório; tarifas/consumos negativos bloqueados; `aria-live` para mensagens.
 
 ## 9. Acessibilidade & responsividade
-- Stepper com `aria-current`, cartões/inputs navegáveis por teclado.
+- Stepper com `aria-current`, barra de progresso neutra e botões das etapas navegáveis por teclado.
 - SegmentPicker usa radios e descrição textual de β/γ/área/energia.
 - Layout responsivo (mobile-first). Gráfico com altura fixa e overflow horizontal em telas estreitas.
 - Goniômetro possui descrição e controles de teclado (setas) no modo manual.

@@ -43,7 +43,7 @@ export function StaticThumbnails({ center, onSelect, distanceMeters = 60 }: Stat
         url.searchParams.set('scale', '2')
         url.searchParams.set('maptype', 'satellite')
         url.searchParams.set('key', apiKey)
-        url.searchParams.append('markers', `color:0x2563EB|${point.lat},${point.lng}`)
+        url.searchParams.append('markers', `color:0x4B5563|${point.lat},${point.lng}`)
 
         return (
           <button
