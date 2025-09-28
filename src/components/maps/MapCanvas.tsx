@@ -125,11 +125,11 @@ export function MapCanvas({
       const polygon = new google.maps.Polygon({
         map,
         paths: polygonOptions.path,
-        strokeColor: '#2563eb',
+        strokeColor: '#1f2937',
         strokeOpacity: 0.9,
         strokeWeight: 2,
-        fillColor: '#38bdf8',
-        fillOpacity: 0.26,
+        fillColor: '#4b5563',
+        fillOpacity: 0.18,
         draggable: polygonOptions.draggable ?? false,
         editable: polygonOptions.editable ?? false,
       })
@@ -185,11 +185,11 @@ export function MapCanvas({
           drawingModes: [drawingLib.OverlayType.POLYGON],
         },
         polygonOptions: {
-          strokeColor: '#0ea5e9',
+          strokeColor: '#1f2937',
           strokeWeight: 2,
           strokeOpacity: 0.9,
-          fillColor: '#38bdf8',
-          fillOpacity: 0.26,
+          fillColor: '#4b5563',
+          fillOpacity: 0.18,
         },
       })
 

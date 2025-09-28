@@ -112,7 +112,8 @@ O estado global (`AppStateContext`) armazena: endereço (`place`), dados da Sola
 - `isCalculating`: controla botão de cálculo/disable + loader.
 
 ## 10. Observações de UI
-- Layout utiliza util classes CSS em `src/styles/globals.css` (cards, botões, inputs).
+- Layout utiliza util classes CSS em `src/styles/globals.css` (cards, botões, inputs) com paleta neutra (fundo branco, cinzas
+  claros, texto grafite).
 - Responsividade: grids transformam-se em colunas no mobile; imagens/static maps se ajustam ao container.
 - Acessibilidade: `aria-labels`, `visually-hidden` para mensagens, botões com estados e navegação por teclado no stepper.
 
